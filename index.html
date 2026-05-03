@@ -2906,12 +2906,23 @@ function drawPair(pair){
  document.querySelector("#pairBox").innerHTML=`<div class="card"><h2>${sat.area} 2days分析</h2><div class="muted">${sat.label} / ${sun.label}　${sat.venue}</div><div class="legend"><span class="legendItem common">土日共通</span><span class="legendItem sat">土曜だけ</span><span class="legendItem sun">日曜だけ</span>${sunday10Legend}</div><div class="grid" style="margin-top:14px"><div class="card"><div class="muted">土日共通曲</div><div class="big">${common}</div></div><div class="card"><div class="muted">土曜だけ</div><div class="big">${satOnly}</div></div><div class="card"><div class="muted">日曜だけ</div><div class="big">${sunOnly}</div></div><div class="card"><div class="muted">2日間の曲種類</div><div class="big">${totalUnique}</div></div></div><table><thead><tr><th>曲順</th><th>分類</th><th>土曜日</th><th>日曜日</th></tr></thead><tbody>${body}</tbody></table></div>`;
 }
 function parseSongs(text, showId){
- const lines=text.split(/\n/).map(x=>x.trim()).filter(Boolean), out=[]; let n=1;
+ const lines=text.split(/\n/).map(x=>x.trim()).filter(Boolean), out=[];
+ let fallbackOrder=1;
+ const toHalfWidthNum=s=>s.replace(/[０-９]/g,ch=>String.fromCharCode(ch.charCodeAt(0)-0xFEE0));
  for(const line of lines){
    if(/^(SHOWCASE|FYOP|FYOD|B'z|アンコール|Encore|ENCORE)/i.test(line)) continue;
-   const m=line.match(/^(\d+)[\.．\)）\s、-]+(.+)$/);
-   if(m) out.push({showId,order:Number(m[1]),song:normalizeSongName(m[2].trim()),section:Number(m[1])>=19?"Encore":"Main"});
-   else out.push({showId,order:n++,song:normalizeSongName(line),section:n>=20?"Encore":"Main"});
+   const normalizedLine=toHalfWidthNum(line);
+   const m=normalizedLine.match(/^(\d+)(?:[\.．\)）\s、-]+)(.+)$/);
+   if(m){
+     const order=Number(m[1]), song=normalizeSongName(m[2].trim());
+     if(song) out.push({showId,order,song,section:order>=19?"Encore":"Main"});
+     fallbackOrder=Math.max(fallbackOrder,order+1);
+     continue;
+   }
+   const song=normalizeSongName(line);
+   if(!song) continue;
+   const order=fallbackOrder++;
+   out.push({showId,order,song,section:order>=19?"Encore":"Main"});
  }
  return out;
 }
