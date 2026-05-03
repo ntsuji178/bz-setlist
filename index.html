@@ -29,7 +29,7 @@ table{width:100%;border-collapse:separate;border-spacing:0;margin-top:12px;overf
 th,td{border-bottom:1px solid var(--line);padding:11px 13px;text-align:left;font-size:14px;vertical-align:middle}
 th{color:var(--accent);background:#11141d}
 tr:hover td{background:#1c2130}.pill{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:4px 9px;font-size:12px;color:var(--muted)}
-.matrix-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}.matrix td,.matrix th{min-width:74px;text-align:center}.matrix th:first-child,.matrix td:first-child{position:sticky;left:0;background:#121620;text-align:left;min-width:210px;z-index:3}
+.matrix-wrap{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:16px}.matrix td,.matrix th{min-width:74px;text-align:center}.matrix th:first-child,.matrix td:first-child{position:sticky;left:0;background:#121620;text-align:left;min-width:210px;z-index:3}
 .hit{font-weight:900;color:var(--accent2)}.blank{color:#555}.rank{display:flex;flex-direction:column;gap:8px}.bar{height:9px;background:#2a3040;border-radius:999px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
 .footer{color:var(--muted);font-size:12px;margin-top:24px;line-height:1.7}
 .changeBox{margin:16px 0;padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025)}
@@ -41,6 +41,11 @@ tr:hover td{background:#1c2130}.pill{display:inline-flex;border:1px solid var(--
 .formgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.formgrid label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:12px}.formgrid input,.formgrid select{min-width:0;width:100%}
 .notice{background:rgba(255,211,106,.08);border:1px solid rgba(255,211,106,.25);border-radius:14px;padding:12px;margin:12px 0;color:#f5d98f}
 @media(max-width:780px){.grid{grid-template-columns:repeat(2,1fr)}.formgrid{grid-template-columns:1fr}h1{font-size:20px}th,td{font-size:12px;padding:8px}.card{padding:13px}}
+
+/* Performance tweaks */
+.matrix-wrap{contain:layout paint}
+.card{contain:layout}
+
 </style>
 </head>
 <body>
@@ -2821,7 +2826,7 @@ function changesFromPrev(showId){
  for(let order=1;order<=30;order++){const before=songAt(prevId,order), after=songAt(showId,order); if(after&&before&&before!==after)out.push({order,before,after}); else if(after&&!before)out.push({order,before:"未入力",after});}
  return out;
 }
-function render(tab="dash"){ if(tab==="dash")renderDash(); if(tab==="shows")renderShows(); if(tab==="songs")renderSongs(); if(tab==="matrix")renderMatrix(); if(tab==="pairs")renderPairs(); if(tab==="import")renderImport(); if(tab==="data")renderData(); }
+function render(tab="dash"){ if(tab==="dash")renderDash(); if(tab==="shows")renderShows(); if(tab==="songs")renderSongs(); if(tab==="matrix")renderMatrix(); if(tab==="pairs")renderPairs(); if(tab==="import")renderImport(); }
 
 function renderDash(){
  const done=visibleShows().filter(s=>s.status==="入力済").length, total=visibleShows().length, totalSongs=songCounts().length, top=songCounts().slice(0,8);
@@ -2854,9 +2859,18 @@ function renderSongs(){
  setApp(`<div class="card"><h2>曲別ランキング</h2>${songCounts().length?`<table><thead><tr><th>#</th><th>曲名</th><th>回数</th><th>出現率</th></tr></thead><tbody>${songCounts().map((x,i)=>`<tr><td>${i+1}</td><td>${x.song}</td><td>${x.count}</td><td>${done?Math.round(x.count/done*100):0}%</td></tr>`).join("")}</tbody></table>`:`<div class="muted">データがありません。</div>`}</div>`);
 }
 function renderMatrix(){
- const songs=songCounts().map(x=>x.song), doneShows=visibleShows().filter(s=>s.status==="入力済");
+ const counts=songCounts();
+ const songs=counts.map(x=>x.song), doneShows=visibleShows().filter(s=>s.status==="入力済");
  if(!songs.length){setApp(`<div class="card">マトリクス表示できるデータがありません。</div>`);return;}
- setApp(`<div class="matrix-wrap"><table class="matrix"><thead><tr><th>曲名</th>${doneShows.map(s=>`<th>${s.label}<br>${s.area}</th>`).join("")}<th>計</th></tr></thead><tbody>${songs.map(song=>{const cells=doneShows.map(s=>rows().some(r=>r.showId===s.id&&r.song===song)?`<td class="hit">●</td>`:`<td class="blank">—</td>`).join(""); const c=songCounts().find(x=>x.song===song).count; return `<tr><td>${song}</td>${cells}<td>${c}</td></tr>`}).join("")}</tbody></table></div>`);
+ const currentRows=rows();
+ const hitSet=new Set(currentRows.map(r=>`${r.showId}||${r.song}`));
+ const countMap=Object.fromEntries(counts.map(x=>[x.song,x.count]));
+ const head=doneShows.map(s=>`<th>${s.label}<br>${s.area}</th>`).join("");
+ const body=songs.map(song=>{
+   const cells=doneShows.map(s=>hitSet.has(`${s.id}||${song}`)?`<td class="hit">●</td>`:`<td class="blank">—</td>`).join("");
+   return `<tr><td>${song}</td>${cells}<td>${countMap[song]}</td></tr>`;
+ }).join("");
+ setApp(`<div class="matrix-wrap"><table class="matrix"><thead><tr><th>曲名</th>${head}<th>計</th></tr></thead><tbody>${body}</tbody></table></div>`);
 }
 function renderPairs(){
  const done=visibleShows().filter(s=>s.status==="入力済"), groups=[];
@@ -2893,11 +2907,6 @@ function renderImport(){
  document.querySelector("#saveMergeBtn").onclick=()=>{const parsed=readParsed(); if(!parsed)return; const id=sel.value; data.setlists=data.setlists.filter(r=>!(r.showId===id&&parsed.some(p=>p.order===r.order))).concat(parsed); data.shows=data.shows.map(s=>s.id===id?{...s,status:"入力済"}:s); data.updated=new Date().toISOString().slice(0,10); saveLocal(); alert("追記・更新しました"); render("shows");};
  document.querySelector("#saveReplaceBtn").onclick=()=>{const parsed=readParsed(); if(!parsed)return; const id=sel.value; data.setlists=data.setlists.filter(r=>r.showId!==id).concat(parsed); data.shows=data.shows.map(s=>s.id===id?{...s,status:"入力済"}:s); data.updated=new Date().toISOString().slice(0,10); saveLocal(); alert("全上書きしました"); render("shows");};
  document.querySelector("#addShowBtn").onclick=()=>{const t=document.querySelector("#newTour").value, date=document.querySelector("#newDate").value.trim(), label=document.querySelector("#newLabel").value.trim()||date, area=document.querySelector("#newArea").value.trim(), venue=document.querySelector("#newVenue").value.trim(), type=document.querySelector("#newType").value; if(!date||!area||!venue){alert("日付・エリア・会場を入れてください");return;} const id=(date.replaceAll("/","-")+"-"+area+"-"+Math.random().toString(36).slice(2,6)).replace(/\s/g,""); data.shows.push({id,date,label,area,venue,status:"未入力",tour:t,series:t==="SHOWCASE"?"SHOWCASE":(t==="FYOD"?"FC":"LIVE-GYM"),type}); selectedTour=t; localStorage.setItem("selectedTour_v4",selectedTour); saveLocal(); alert("公演を追加しました。次にセトリを貼って保存できます。"); render("import");};
-}
-function renderData(){
- setApp(`<div class="card"><h2>データ管理</h2><p class="muted">ここでローカル保存データを書き出せます。公開ページ全体に反映するには、GitHubのindex.html側にデータを反映する必要があります。</p><div class="controls"><button id="exportBtn">JSONを書き出し</button><button id="resetBtn" class="danger">ローカル保存をリセット</button></div><textarea id="dataOut" rows="14"></textarea></div>`);
- document.querySelector("#exportBtn").onclick=()=>{document.querySelector("#dataOut").value=JSON.stringify(data,null,2)};
- document.querySelector("#resetBtn").onclick=()=>{if(confirm("この端末のローカル保存を消します。よろしいですか？")){localStorage.removeItem("bzData_v4"); location.reload();}};
 }
 render();
 </script>
