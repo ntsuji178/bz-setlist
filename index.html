@@ -2816,8 +2816,23 @@ function tourBar(){
 function bindTourBar(){
  document.querySelectorAll(".tourBtn").forEach(btn=>btn.onclick=()=>{selectedTour=btn.dataset.tour; localStorage.setItem("selectedTour_v4", selectedTour); const active=document.querySelector("nav button.active"); render(active?active.dataset.tab:"dash");});
 }
+function normalizeSongName(song){
+  return String(song || "")
+    .trim()
+    .replace(/The ⅢRD Eye/g, "The IIIRD Eye")
+    .replace(/The IIIrd Eye/g, "The IIIRD Eye")
+    .replace(/The Ⅲrd Eye/g, "The IIIRD Eye")
+    .replace(/^shower$/i, "Shower")
+    .replace(/#1090\s*[～〜~]\s*Million Dreams\s*[～〜~]?\s*\/?\s*(Tak Matsumoto|松本孝弘)?/i, "#1090~Million Dreams~ / 松本孝弘")
+    .replace(/ミエナイチカラ\s*[～〜~]\s*INVISIBLE ONE\s*[～〜~]/g, "ミエナイチカラ 〜INVISIBLE ONE〜");
+}
+
 function songCounts(){
- const m={}; rows().forEach(r=>m[r.song]=(m[r.song]||0)+1);
+ const m={};
+ rows().forEach(r=>{
+   const song = normalizeSongName(r.song);
+   m[song]=(m[song]||0)+1;
+ });
  return Object.entries(m).map(([song,count])=>({song,count})).sort((a,b)=>b.count-a.count||a.song.localeCompare(b.song,'ja'));
 }
 function songAt(showId, order){const x=data.setlists.find(r=>r.showId===showId && r.order===order); return x?x.song:""}
