@@ -4,8 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>B'z Live Setlist DB</title>
-<link rel="apple-touch-icon" href="B4991D9E-91DD-4222-B7C1-F811D4A3E26E.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <style>
 :root{--bg:#0f1117;--panel:#171a23;--panel2:#202432;--text:#f5f7fb;--muted:#a9b0c3;--line:#313749;--accent:#ffd36a;--accent2:#7ee7c8;--danger:#ff7d7d;--blue:#9fb8ff}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(180deg,#0f1117,#141824);color:var(--text)}
@@ -176,7 +174,7 @@ window.BZ_DATA = {
       "label": "5.3（日）",
       "venue": "沖縄サントリーアリーナ",
       "area": "沖縄",
-      "status": "未入力",
+      "status": "入力済",
       "tour": "FYOP+",
       "series": "LIVE-GYM",
       "type": "ARENA"
@@ -2666,6 +2664,126 @@ window.BZ_DATA = {
       "order": 17,
       "song": "ミエナイチカラ〜INVISIBLE ONE~",
       "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 1,
+      "song": "FAITH?",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 2,
+      "song": "濁流BOY",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 3,
+      "song": "IT'S SHOWTIME!!",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 4,
+      "song": "Hi",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 5,
+      "song": "ねがい",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 6,
+      "song": "イチブトゼンブ",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 7,
+      "song": "ペインキラー",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 8,
+      "song": "INTO THE BLUE",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 9,
+      "song": "The IIIRD Eye",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 10,
+      "song": "Shower",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 11,
+      "song": "#1090 ～Million Dreams～ / 松本孝弘",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 12,
+      "song": "Don't Leave Me",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 13,
+      "song": "イルミネーション",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 14,
+      "song": "FMP",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 15,
+      "song": "有頂天",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 16,
+      "song": "Heaven Knows",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 17,
+      "song": "さまよえる蒼い弾丸",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 18,
+      "song": "ultra soul",
+      "section": "Main"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 19,
+      "song": "その先へ",
+      "section": "Encore"
+    },
+    {
+      "showId": "2026-05-03",
+      "order": 20,
+      "song": "ミエナイチカラ 〜INVISIBLE ONE〜",
+      "section": "Encore"
     }
   ]
 };
@@ -2750,7 +2868,7 @@ function drawPair(pair){
  const [sat,sun]=pair, satSongs=new Set(data.setlists.filter(r=>r.showId===sat.id).map(r=>r.song)), sunSongs=new Set(data.setlists.filter(r=>r.showId===sun.id).map(r=>r.song));
  const max=Math.max(20, ...data.setlists.filter(r=>r.showId===sat.id||r.showId===sun.id).map(r=>r.order), 0);
  let common=0,satOnly=0,sunOnly=0,sunday12=0;
- const body=Array.from({length:max},(_,i)=>{const order=i+1, sa=songAt(sat.id,order), sb=songAt(sun.id,order); const same=sa&&sb&&sa===sb, sof=sa&&!sunSongs.has(sa), suof=sb&&!satSongs.has(sb), f=order===12&&sb&&suof; let label=same?"共通枠":(f?"日曜12曲目・初登場枠":"日替わり枠"), sc=same?"cellCommon":(sof?"cellSaturday":""), uc=same?"cellCommon":(f?"cellFirstSunday12":(suof?"cellSunday":"")); if(same)common++; if(sof)satOnly++; if(suof)sunOnly++; if(f)sunday12++; return `<tr><td>${order}</td><td><span class="pill">${label}</span></td><td class="${sc}">${sa||"<span class='blank'>未入力</span>"}</td><td class="${uc}">${sb||"<span class='blank'>未入力</span>"}${f?` <span class="firstMark">★日曜12曲目</span>`:""}</td></tr>`;}).join("");
+ const body=Array.from({length:max},(_,i)=>{const order=i+1, sa=songAt(sat.id,order), sb=songAt(sun.id,order); const same=sa&&sb&&sa===sb, sof=sa&&!sunSongs.has(sa), suof=sb&&!satSongs.has(sb), f=order===12&&sb&&suof; let label=same?"共通枠":(f?"日曜12曲目・初登場枠":"日替わり枠"), sc=same?"cellCommon":(sof?"cellSaturday":""), uc=same?"cellCommon":(f?"cellFirstSunday12":(suof?"cellSunday":"")); if(same)common++; if(sof)satOnly++; if(suof)sunOnly++; if(f)sunday12++; return `<tr><td>${order}</td><td><span class="pill">${label}</span></td><td class="${sc}">${sa||"<span class='blank'>未入力</span>"}</td><td class="${uc}">${sb||"<span class='blank'>未入力</span>"}${order===10&&sb?` <span class="firstMark">★日曜10曲目</span>`:""}${f?` <span class="firstMark">★日曜12曲目</span>`:""}</td></tr>`;}).join("");
  document.querySelector("#pairBox").innerHTML=`<div class="card"><h2>${sat.area} 2days分析</h2><div class="muted">${sat.label} / ${sun.label}　${sat.venue}</div><div class="legend"><span class="legendItem common">土日共通</span><span class="legendItem sat">土曜だけ</span><span class="legendItem sun">日曜だけ</span><span class="legendItem first">日曜12曲目</span></div><div class="grid" style="margin-top:14px"><div class="card"><div class="muted">土日共通曲</div><div class="big">${common}</div></div><div class="card"><div class="muted">土曜だけ</div><div class="big">${satOnly}</div></div><div class="card"><div class="muted">日曜だけ</div><div class="big">${sunOnly}</div></div><div class="card"><div class="muted">日曜12曲目</div><div class="big">${sunday12}</div></div></div><table><thead><tr><th>曲順</th><th>分類</th><th>土曜日</th><th>日曜日</th></tr></thead><tbody>${body}</tbody></table></div>`;
 }
 function parseSongs(text, showId){
